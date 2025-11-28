@@ -130,21 +130,42 @@ body {
 /* --------------------- */
 /* GOLD SHINE ANIMATION */
 /* --------------------- */
+/* --------------------------------------------- */
+/* UPDATED SHINE EFFECT FOR LEADERBOARD CARDS   */
+/* --------------------------------------------- */
+
+.pyramid-card {
+  position: relative;
+  overflow: hidden; /* keeps shine inside rounded corners */
+}
+
+/* Soft fading shine sweep */
 .shine {
   position: absolute;
   top: 0;
-  left: -100%;
-  width: 300%;
+  left: -200%;
+  width: 400%;
   height: 100%;
-  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.5), transparent);
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 20%,
+    rgba(255, 255, 255, 0.18) 48%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0.18) 52%,
+    rgba(255, 255, 255, 0) 80%
+  );
   animation: shineMove 3s infinite linear;
+  mix-blend-mode: screen;
   pointer-events: none;
+  z-index: 3;
 }
 
 @keyframes shineMove {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
+  from { left: -200%; }
+  to   { left: 200%; }
 }
+
+
 
 /* --------------------- */
 /* SECOND ROW */

@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Achievements</title>
+  <link rel="stylesheet" href="{% static 'achievements.css' %}">
+</head>
+
+<body>
+<div class="dashboard">
+
+  <!-- HEADER -->
+  <header class="top-bar premium-header">
+    <div class="left-side">
+      <span class="logo"></span>
+      <a href="{% url 'task_dashboard' %}" class="nav-btn">Home</a>
+    </div>
+
+    <nav class="nav-menu">
+      <a href="{% url 'achievements_dashboard' %}" class="nav-item active">Achievements</a>
+      <a href="{% url 'leaderboard' %}" class="nav-item">Leaderboard</a>
+      <a href="{% url 'streak_dashboard' %}" class="nav-item">Streaks</a>
+      <a href="{% url 'user_progress' %}" class="nav-item">Progress</a>
+      <a href="{% url 'profile_user' %}" class="nav-item">Profile</a>
+
+      <form action="{% url 'login' %}" method="post" class="logout-form">
+        {% csrf_token %}
+        <button type="submit" class="logout-btn">Logout</button>
+      </form>
+    </nav>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="task-container">
+
+    <div class="pyramid-card-wrapper">
+      <div class="pyramid-card">
+        <h1 class="improv-title">🏆 Achievements</h1>
+        <div class="shine"></div>
+        <h2>Track Your Progress & Unlock Badges</h2>
+      </div>
+    </div>
+
+    <!-- ACHIEVEMENTS GRID -->
+    <div class="achievement-grid">
+
+      {% for ach in achievements %}
+      <div class="achievement-card {% if ach.unlocked %}unlocked{% else %}locked{% endif %}">
+        
+        <!-- ICON -->
+        <div class="icon">
+          {{ ach.icon|default:"🏆" }}
+        </div>
+
+        <!-- TITLE -->
+        <h3 class="{% if ach.unlocked %}gold-text{% endif %}">
+          {{ ach.title }}
+        </h3>
+
+        <!-- DESCRIPTION -->
+        <p>{{ ach.description }}</p>
+
+        <!-- STATUS TEXT -->
+        {% if ach.unlocked %}
+          <span class="unlocked-text">Unlocked</span>
+          {% if ach.unlocked_at %}
+          <div><small>Unlocked on: {{ ach.unlocked_at|date:"M d, Y H:i" }}</small></div>
+          {% endif %}
+          <div class="shine"></div>
+        {% else %}
+          <span class="locked-text">Locked 🔒</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+    </div>
+  </main>
+
+</div>
+</body>
+</html>

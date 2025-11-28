@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Profile</title>
-  <link rel="stylesheet" href="{% static 'profile_user.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_profile.css' %}">
 </head>
 <body>
   <div class="dashboard">
@@ -13,7 +13,7 @@
     <!-- PREMIUM HEADER (like leaderboard) -->
     <header class="top-bar premium-header">
       <div class="left-side">
-        <span class="logo">✨</span>
+        <span class="logo"></span>
         <a href="{% url 'admin_dashboard' %}" class="nav-btn">Home</a>
       </div>
 
@@ -38,7 +38,7 @@
             <!-- AVATAR -->
 <div class="avatar-wrapper">
     {% if profile_image %}
-        <img src="{{ MEDIA_URL }}{{ profile_image }}" class="avatar">
+        <img src="{{ profile_image }}" class="avatar">
     {% else %}
         <img src="{% static 'images/profile.jpg' %}" class="avatar">
     {% endif %}
@@ -68,28 +68,120 @@
       </section>
 
       <!-- RIGHT: EDIT PROFILE -->
-      <section class="profile-container-section">
-        <div class="profile-card">
-          <h2 class="profile-title">Edit Profile</h2>
+<!-- RIGHT: EDIT PROFILE -->
+<section class="profile-container-section">
+  <div class="profile-card edit-card" id="editCard">
+    
+    <h2 class="profile-title">Edit Profile</h2>
 
-          <form method="POST" class="edit-profile-form">
-            {% csrf_token %}
-            <div class="info-wrapper">
-              <div class="info-item">
-                <label class="label" for="email">Email:</label>
-                <input type="email" id="email" name="email" value="{{ user_email }}" required>
-              </div>
+    <!-- BUTTONS -->
+    <div id="defaultOptions" class="edit-options">
+      <button class="edit-btn full-btn" onclick="expandPasswordForm()">Change Password</button>
+      <button class="delete-btn full-btn" onclick="showDeleteConfirm()">Delete Account</button>
+    </div>
 
-              <div class="info-item">
-                <label class="label" for="password">New Password:</label>
-                <input type="password" id="password" name="password" placeholder="Enter new password">
-              </div>
+    <!-- HIDDEN PASSWORD FORM (expands inside the card) -->
+    <form id="passwordForm" method="POST" class="expand-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="change_password">
 
-              <button type="submit" class="edit-btn">Update Profile</button>
-            </div>
-          </form>
+      <div class="form-fields">
+        <div class="form-group">
+          <label>Old Password</label>
+          <input type="password" name="old_password" required>
         </div>
-      </section>
+
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" name="new_password" required>
+        </div>
+
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" name="confirm_password" required>
+        </div>
+
+        <button type="submit" class="edit-btn full-btn">Save Changes</button>
+        <button type="button" class="cancel-btn2 full-btn" onclick="collapsePasswordForm()">Cancel</button>
+      </div>
+    </form>
+
+    <!-- DELETE POPUP -->
+    <div id="deletePopup" class="popup hidden">
+      <div class="popup-card deluxe-popup">
+        <h3>⚠ Delete Account?</h3>
+        <p class="popup-text">This action cannot be undone.</p>
+
+        <form method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete_account">
+          <button type="submit" class="delete-btn full-btn">Yes, Delete</button>
+          <button type="button" class="cancel-btn1 full-btn" onclick="closeDelete()">Cancel</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+
+<script>
+function showChangePassword() {
+  document.getElementById("defaultOptions").classList.add("hidden");
+  document.getElementById("changePasswordForm").classList.remove("hidden");
+}
+
+function cancelEdit() {
+  document.getElementById("changePasswordForm").classList.add("hidden");
+  document.getElementById("defaultOptions").classList.remove("hidden");
+}
+
+function showDeleteConfirm() {
+  document.getElementById("deletePopup").classList.remove("hidden");
+  document.getElementById("deletePopup").style.display = "flex";
+}
+
+function closeDelete() {
+  document.getElementById("deletePopup").classList.add("hidden");
+  document.getElementById("deletePopup").style.display = "none";
+}
+</script>
+<script>
+function expandPasswordForm() {
+    const form = document.getElementById("passwordForm");
+    const fields = document.querySelector(".form-fields");
+    const options = document.getElementById("defaultOptions");
+
+    options.style.display = "none";
+
+    form.style.maxHeight = fields.scrollHeight + "px";
+}
+
+function collapsePasswordForm() {
+    const form = document.getElementById("passwordForm");
+    const options = document.getElementById("defaultOptions");
+
+    form.style.maxHeight = "0px";
+
+    setTimeout(() => {
+        options.style.display = "flex";
+    }, 350);
+}
+
+function showDeleteConfirm() {
+    document.getElementById("deletePopup").classList.remove("hidden");
+    document.getElementById("deletePopup").style.display = "flex";
+}
+
+function closeDelete() {
+    document.getElementById("deletePopup").classList.add("hidden");
+    document.getElementById("deletePopup").style.display = "none";
+}
+</script>
+
+
+
 
     </main>
   </div>

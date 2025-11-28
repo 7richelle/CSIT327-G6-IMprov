@@ -56,3 +56,38 @@ class PasswordResetOTP(models.Model):
     def is_valid(self):
         # OTP valid for 5 minutes
         return timezone.now() - self.created_at < datetime.timedelta(minutes=5)
+    
+from django.db import models
+from django.contrib.auth.models import User
+
+
+class Streak(models.Model):
+    streak_id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    points = models.IntegerField(default=0)
+    last_completed = models.DateField(null=True, blank=True)
+
+    class Meta:
+        managed = False  # 🔥 IMPORTANT for Supabase
+
+
+from django.db import models
+from django.contrib.auth.models import User
+
+class Achievement(models.Model):
+    achievement_id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="achievements")
+    code = models.CharField(max_length=50)  # unique code to identify
+    title = models.TextField()
+    description = models.TextField()
+    unlocked = models.BooleanField(default=False)
+    unlocked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "achievements"
+        managed = False
+
+
+
+
+

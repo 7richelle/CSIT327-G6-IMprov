@@ -203,6 +203,7 @@ body {
 
 .value {
     color: #f5f5f5;
+    margin-top: 10px;
 }
 
 /* --------------------- */
@@ -241,7 +242,43 @@ body {
 .edit-btn:hover {
     background: linear-gradient(135deg, #ffe37b, #ffb300);
 }
-
+.delete-btn{
+      margin-top: 15px;
+    background: linear-gradient(135deg, #ff5f5f, #ff1f1f);
+    color: #000;
+    font-weight: 700;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.delete-btn:hover {
+      background: linear-gradient(135deg, #ff7f7f, #ff3f3f); /* Lighter gradient on hover */
+  transform: translateY(-2px) scale(1.02);
+}
+.cancel-btn {
+  margin-top: 15px;
+    background: linear-gradient(135deg, #ff5f5f, #ff1f1f);
+    color: #000;
+    font-weight: 700;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.cancel-btn1 {
+  margin-top: 15px;
+    background: linear-gradient(135deg, #ffe37b, #ffb300);
+    color: #000;
+    font-weight: 700;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
 /* --------------------- */
 /* HIDE FILE INPUT */
 .upload-form input[type="file"] {
@@ -250,25 +287,25 @@ body {
 /* Logout button specifically */
 
 .logout-btn {
-  background: linear-gradient(135deg, #ff5f5f, #ff1f1f); /* Red gradient */
-  color: #fff; /* White text */
-  border: none; /* No border */
-  font-weight: 600; /* Bold text */
-  cursor: pointer; /* Pointer on hover */
-  padding: 8px 14px; /* Space inside button */
-  border-radius: 10px; /* Rounded corners */
-  box-shadow: 0 4px 12px rgba(255,95,95,0.5); /* Soft shadow for depth */
-  transition: 0.3s ease; /* Smooth hover transition */
-  text-decoration: none; /* Remove underline */
+  background: linear-gradient(135deg, #ff5f5f, #ff1f1f); 
+  color: #fff; 
+  border: none; 
+  font-weight: 600; 
+  cursor: pointer; 
+  padding: 8px 14px; 
+  border-radius: 10px; 
+  box-shadow: 0 4px 12px rgba(255,95,95,0.5); 
+  transition: 0.3s ease; 
+  text-decoration: none; 
 }
 
 .logout-btn:hover {
-  background: linear-gradient(135deg, #ff7f7f, #ff3f3f); /* Lighter gradient on hover */
-  transform: translateY(-2px) scale(1.02); /* Slight lift and scale */
+  background: linear-gradient(135deg, #ff7f7f, #ff3f3f); 
+  transform: translateY(-2px) scale(1.02); 
 }
-/* Make form inline inside nav-menu */
+
 .nav-menu .logout-form {
-  display: inline-block;  /* shrink-wrap */
+  display: inline-block;  
   margin: 0;
 }
 /* Premium Logout Button */
@@ -284,11 +321,214 @@ body {
   transition: 0.3s ease;
   text-decoration: none;
   font-size: 16px;
-  display: inline-block;  /* ensures proper sizing */
+  display: inline-block;  
 }
-/* Hover effect */
+
 .nav-menu .logout-form .logout-btn:hover {
   background: linear-gradient(135deg, #ff7f7f, #ff3f3f);
   transform: translateY(-2px) scale(1.02);
 }
+.popup {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  justify-content: center;
+  align-items: center;
+  color: #ffd978;
+  color: #000;
+}
 
+.popup-card {
+  border: #ffb300, 2px solid;
+  background: #000;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  color: #ffd978;
+}
+.delete-btn{
+      margin-top: 15px;
+    background: linear-gradient(135deg, #ff5f5f, #ff1f1f);
+    color: #000;
+    font-weight: 700;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.delete-btn:hover {
+      background: linear-gradient(135deg, #ff7f7f, #ff3f3f); /* Lighter gradient on hover */
+  transform: translateY(-2px) scale(1.02);
+}
+.cancel-btn2 {
+  margin-top: 15px;
+    background: linear-gradient(135deg, #ff5f5f, #ff1f1f);
+    color: #000;
+    font-weight: 700;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.cancel-btn1 {
+  margin-top: 15px;
+    background: linear-gradient(135deg, #ffe37b, #ffb300);
+    color: #000;
+    font-weight: 700;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.popup {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  justify-content: center;
+  align-items: center;
+  color: #ffd978;
+  color: #000;
+}
+
+.popup-card {
+  border: #ffb300, 2px solid;
+  background: #000;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  color: #ffd978;
+}
+/* Smooth slide animation */
+.hidden {
+    display: none;
+}
+
+/* Edit Card Improvements */
+.edit-card {
+    padding: 35px;
+}
+
+.edit-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.full-btn {
+    width: 100%;
+}
+
+/* Edit Form Styling */
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: fadeSlide 0.25s ease;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.form-group label {
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+    color: #ffd978;
+    font-weight: 600;
+}
+
+.form-group input {
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.08);
+    color: white;
+    transition: 0.25s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #ffd978;
+    background: rgba(255,255,255,0.15);
+}
+
+/* Popup Deluxe */
+.deluxe-popup {
+    background: #111;
+    border: 1px solid #ffb300;
+    padding: 25px;
+    border-radius: 20px;
+    animation: fadeIn 0.25s ease;
+}
+
+.popup-text {
+    color: #f0f0f0;
+    margin: 12px 0 18px;
+    font-size: 0.95rem;
+}
+
+/* ANIMATIONS */
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+/* Expandable form container */
+.expand-form {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+}
+
+/* Inside form fields */
+.form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 15px;
+}
+
+/* Labels + input styling */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.form-group label {
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #ffd978;
+}
+
+.form-group input {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    color: #fff;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #ffd978;
+    background: rgba(255,255,255,0.12);
+}
+
+/* button spacing */
+.full-btn {
+    width: 100%;
+}

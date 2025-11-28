@@ -295,7 +295,7 @@ input[type="radio"] {
   position: relative;
   z-index: 2;
   display: inline-block;
-  height: 150px;
+  height: 160px;
 
   /* Intensified glow */
   text-shadow: 

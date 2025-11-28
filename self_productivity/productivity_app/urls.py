@@ -28,5 +28,7 @@ urlpatterns = [
     path("admin_profile/", views.admin_profile, name="admin_profile"),
     path("task_summary/", views.task_summary, name="task_summary"),
     path("leaderboard/", views.leaderboard, name="leaderboard"),
+    path("streak_dashboard/", views.streak_dashboard, name="streak_dashboard"),
+    path("achievements_dashboard/", views.achievements_dashboard, name="achievements_dashboard"),
 
 ]

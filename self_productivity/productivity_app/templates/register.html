@@ -11,6 +11,26 @@
   <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.1/dist/dotlottie-wc.js" type="module"></script>
 </head>
 <body>
+
+
+{% if messages %}
+<div class="popup-overlay" id="popup">
+  <div class="popup-modal">
+
+    {% for message in messages %}
+      <p class="popup-text">{{ message }}</p>
+    {% endfor %}
+
+    <button class="popup-action" onclick="document.getElementById('popup').style.display='none'">
+      Okay
+    </button>
+
+  </div>
+</div>
+{% endif %}
+
+
+<div class="page-center">
   <div class="container">
     <div class="left">
       <dotlottie-wc 
@@ -24,14 +44,6 @@
       <h2>Sign Up</h2>
       <p>Create an account to get started.</p>
 
- <!--{% if messages %}
-  <div class="alert-card">
-    {% for message in messages %}
-      <p>{{ message }}</p>
-    {% endfor %}
-  </div>
-{% endif %}-->
-
       <form method="POST" action="{% url 'register' %}">
         {% csrf_token %}
 
@@ -39,7 +51,7 @@
         <input type="text" name="name" id="name" placeholder="Enter your name" required>
 
         <label for="email">Email Address</label>
-        <input type="email" name="email" id="email" placeholder="Enter your gmail account" required>
+        <input type="email" name="email" id="email" placeholder="Enter your email account" required>
 
         <label for="password">Password</label>
         <input type="password" name="password" id="password" placeholder="Enter your password" required>
@@ -48,6 +60,7 @@
         <p class="login-text">Already have an account? <a href="{% url 'login' %}">Login</a></p>
       </form>
     </div>
+  </div>
   </div>
 </body>
 </html>

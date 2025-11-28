@@ -36,10 +36,10 @@
       <form method="POST" action="{% url 'login' %}">
         {% csrf_token %}
         <label for="email">Email</label>
-        <input type="email" name="email" id="email" placeholder="username@gmail.com" required>
+        <input type="email" name="email" id="email" placeholder="Enter your email account" required>
 
         <label for="password">Password</label>
-        <input type="password" name="password" id="password" placeholder="********" required>
+        <input type="password" name="password" id="password" placeholder="Enter your password" required>
 
         <div class="options">
           <a href="{% url 'forgot_password' %}">Forgot Password?</a>

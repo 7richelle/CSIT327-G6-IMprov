@@ -18,7 +18,9 @@ from django.core.mail import send_mail
 from .models import PasswordResetOTP
 from .forms import ForgotPasswordForm, OTPVerificationForm, ResetPasswordForm
 from django.contrib.auth.hashers import make_password, check_password  # ✅ ADD THIS
-
+from supabase import create_client
+from django.conf import settings
+from .utils.achievements import create_user_achievements, check_achievements  # <--- ADD THIS
 # --- SUPABASE CONFIG ---
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -34,33 +36,38 @@ def register(request):
         email = request.POST.get("email")
         password = request.POST.get("password")
 
-        #  Check if email already exists in 'user' table
-        check_user = supabase.table("user").select("*").eq("email", email).execute()
-
-        if check_user.data:
-            messages.warning(request, "Account already exists. Please log in instead.")
+        # 1️⃣ Create Supabase Auth user (safe wrapped)
+        try:
+            auth_res = supabase.auth.sign_up({
+                "email": email,
+                "password": password
+            })
+        except Exception as e:
+            messages.error(request, str(e))
             return render(request, "register.html")
 
+        if auth_res.user is None:
+            messages.error(request, "Failed to create account in Supabase Auth.")
+            return render(request, "register.html")
 
-        #  Insert new user
-        data = {
+        auth_uid = auth_res.user.id  
+
+        # 2️⃣ Save into your user table
+        supabase.table("user").insert({
             "name": name,
             "email": email,
-            "password": password,  # store as plain text (varchar) 
-        }
+            "auth_uid": auth_uid,
+            "is_staff": False,
+            "is_superuser": False
+        }).execute()
 
-        response = supabase.table("user").insert(data).execute()
-
-        print(" Supabase Insert Response:", response)
-
-        if response.data:
-            messages.success(request, "Registration successful! You can now log in.")
-            return redirect("login")
-        else:
-            messages.error(request, "Something went wrong while saving your account.")
-            return render(request, "register.html")
+        messages.success(request, "Registration successful! You can now log in.")
+        return redirect("register")
 
     return render(request, "register.html")
+
+
+
 
 
 #  LOGIN FUNCTION
@@ -69,39 +76,39 @@ def login_user(request):
         email = request.POST.get("email")
         password = request.POST.get("password")
 
-        # 🔍 Fetch user by email
-        response = supabase.table("user").select("*").eq("email", email).execute()
+        try:
+            auth_login = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
 
-        if response.data:
-            user = response.data[0]
-            stored_password = user["password"]
+            user = auth_login.user
+            auth_uid = user.id
 
-            #  Check plain password (no hashing)
-            if password == stored_password:
-                #  Login success
-                request.session["user_email"] = user["email"]
-                request.session["user_name"] = user["name"]
-                request.session["user_id"] = user["user_id"]
-                #ADMIN
-                request.session["is_staff"] = user.get("is_staff", False)
-                request.session["is_superuser"] = user.get("is_superuser", False)
+            #  Fetch custom user info
+            profile = supabase.table("user").select("*").eq("auth_uid", auth_uid).execute()
 
-                messages.success(request, f"Welcome back, {user['name']}!")
-
-                if user.get("is_superuser") or user.get("is_staff"):
-                    return redirect("admin_dashboard")
-                else:
-                    return redirect("task_dashboard")
-            else:
-                #  Wrong password
-                messages.error(request, "Incorrect password. Please try again.")
+            if not profile.data:
+                messages.error(request, "User profile not found.")
                 return render(request, "login.html")
-        else:
-            #  No user found
-            #messages.error(request, "Email not registered.")
+
+            profile = profile.data[0]
+
+            request.session["user_id"] = profile.get("user_id")
+            request.session["user_email"] = profile.get("email")
+            request.session["user_name"] = profile.get("name")
+            request.session["is_staff"] = profile.get("is_staff", False)
+            request.session["is_superuser"] = profile.get("is_superuser", False)
+
+            if profile.get("is_superuser") or profile.get("is_staff"):
+                return redirect("admin_dashboard")
+            else:
+                return redirect("task_dashboard")
+
+        except Exception as e:
+            messages.error(request, "Invalid login. Check email or password.")
             return render(request, "login.html")
 
-    # Default (GET request)
     return render(request, "login.html")
 
 
@@ -307,26 +314,56 @@ def update_progress(request):
     return JsonResponse({"error": "Invalid request method"}, status=400)
 
 
+from datetime import date, timedelta
+
 @csrf_exempt
 def end_task_session(request):
     if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            session_id = data.get("session_id")
+        data = json.loads(request.body)
+        session_id = data.get("session_id")
+        user_id = request.session.get("user_id")
+        if not session_id or not user_id:
+            return JsonResponse({"success": False, "error": "Missing session_id or user_id"})
 
-            if not session_id:
-                return JsonResponse({"success": False, "error": "Missing session_id"})
+        # Mark task completed
+        supabase.table("tasksession").update({
+            "status": "completed",
+            "end_time": timezone.now().isoformat()
+        }).eq("session_id", session_id).execute()
 
-            supabase.table("tasksession").update({  #  lowercase name
-                "end_time": timezone.localtime(timezone.now()).isoformat(),
-                "status": "completed"
-            }).eq("session_id", session_id).execute()
+        # Update streak
+        today = datetime.now().date()
+        streak_res = supabase.table("streaks").select("*").eq("user_id", user_id).execute()
+        streak = streak_res.data[0] if streak_res.data else None
 
-            return JsonResponse({"success": True})
-        except Exception as e:
-            return JsonResponse({"success": False, "error": str(e)})
+        points = 1
+        if streak:
+            last_completed = streak.get("last_completed")
+            if last_completed:
+                last_date = datetime.fromisoformat(last_completed).date()
+                delta_days = (today - last_date).days
+                if delta_days == 1:
+                    points = streak["points"] + 1
+                elif delta_days == 0:
+                    points = streak["points"]
+        if streak:
+            supabase.table("streaks").update({
+                "points": points,
+                "last_completed": today.isoformat()
+            }).eq("streak_id", streak["streak_id"]).execute()
+        else:
+            supabase.table("streaks").insert({
+                "user_id": user_id,
+                "points": points,
+                "last_completed": today.isoformat()
+            }).execute()
 
+        # ✅ Check achievements after streak update
+        check_achievements(user_id)
+
+        return JsonResponse({"success": True})
     return JsonResponse({"error": "Invalid request method"}, status=400)
+
 
 
 #  Timer page (HTML)
@@ -352,42 +389,34 @@ def task_timer(request):
 #  PASSWORD RESET (Using Supabase + Gmail OTP)
 
 def forgot_password(request):
-    if request.method == 'POST':
-        form = ForgotPasswordForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
+    if request.method == "POST":
+        email = request.POST.get("email")
 
-            # 🔍 Check if user exists in Supabase
-            check_user = supabase.table("user").select("*").eq("email", email).execute()
-            print("Check user before update:", check_user.data)
-            if not check_user.data:
-                messages.error(request, "No account found with that email.")
-                return render(request, "forgot_password.html", {"form": form})
+        # Check if email exists in your custom table (optional but useful)
+        user_exists = supabase.table("user").select("*").eq("email", email).execute()
 
-            #  Generate and store 6-digit OTP
-            otp = str(random.randint(100000, 999999))
-            request.session["otp"] = otp
-            request.session["email"] = email
+        if not user_exists.data:
+            messages.error(request, "No account found with that email.")
+            return redirect("forgot_password")
 
-            # Send OTP via Gmail
-            try:
-                send_mail(
-                    subject="Your OTP Code for Password Reset",
-                    message=f"Your OTP code is: {otp}\nUse this code to reset your password.",
-                    from_email=os.getenv("EMAIL_HOST_USER"),  # your Gmail
-                    recipient_list=[email],
-                    fail_silently=False,
-                )
-                print(f" Sent OTP {otp} to {email}")  # Debug log
-                messages.success(request, "OTP sent to your email.")
-                return redirect("verify_otp")
-            except Exception as e:
-                print(" Email sending failed:", e)
-                messages.error(request, "Failed to send email. Please try again later.")
-    else:
-        form = ForgotPasswordForm()
+        # 🔥 SUPABASE: Send password reset email
+        try:
+            supabase.auth.reset_password_email(
+                email,
+                options={
+                    "redirect_to": "https://csit327-g6-improv.onrender.com/reset_password"
+                }
+            )
 
-    return render(request, "forgot_password.html", {"form": form})
+            messages.success(request, "A password reset link has been sent to your email.")
+            return redirect("forgot_password")
+
+        except Exception as e:
+            print("Error:", e)
+            messages.error(request, "Failed to send reset link. Try again later.")
+
+    return render(request, "forgot_password.html")
+
 
 
 def verify_otp(request):
@@ -409,55 +438,39 @@ def verify_otp(request):
     return render(request, "verify_otp.html", {"form": form})
 
 
+from .forms import ResetPasswordForm
+
 def reset_password(request):
-    if request.method == 'POST':
+    form = ResetPasswordForm()
+
+    if request.method == "POST":
         form = ResetPasswordForm(request.POST)
         if form.is_valid():
-            email = request.session.get("email")
             new_password = form.cleaned_data["new_password"]
 
-            print("DEBUG: session email ->", email)
-            print("DEBUG: new_password ->", new_password)
+            access_token = request.POST.get("access_token")
+            refresh_token = request.POST.get("refresh_token")
 
-            if not email:
-                messages.error(request, "Session expired. Please restart the password reset process.")
+            if not access_token or not refresh_token:
+                messages.error(request, "Invalid or expired password reset link.")
                 return redirect("forgot_password")
 
             try:
-                check_user = supabase.table("user").select("*").eq("email", email).execute()
-                print("DEBUG: check_user response ->", check_user)
-                print("DEBUG: check_user.data ->", check_user.data)
+                # 🔹 Set session using both tokens
+                supabase.auth.set_session(access_token, refresh_token)
 
-                # try update and print full response attributes
-                update_response = (
-                    supabase.table("user")
-                    .update({"password": new_password})
-                    .eq("email", email)
-                    .execute()
-                )
+                # 🔹 Update password while client is "logged in"
+                supabase.auth.update_user({"password": new_password})
 
-                # Print everything available on response object
-                print("DEBUG: update_response ->", update_response)
-                print("DEBUG: update_response.data ->", getattr(update_response, "data", None))
-                print("DEBUG: update_response.status_code ->", getattr(update_response, "status_code", None))
-                print("DEBUG: update_response.error ->", getattr(update_response, "error", None))
+                messages.success(request, "Your password has been reset. You can now log in.")
+                return redirect("login")
 
-                # decide success
-                if getattr(update_response, "data", None):
-                    messages.success(request, "Password reset successful! You can now log in.")
-                    request.session.flush()
-                    return redirect("login")
-                else:
-                    # give a more helpful message
-                    messages.error(request, " Password not updated. Check Supabase policies or server logs.")
-                    print("WARN: Update returned empty data. Likely blocked by RLS/policies or permission issue.")
             except Exception as e:
-                print(" Exception when resetting password:", e)
-                messages.error(request, f"Something went wrong: {e}")
-    else:
-        form = ResetPasswordForm()
+                print("RESET ERROR:", e)
+                messages.error(request, "Failed to update password. Please try again.")
 
     return render(request, "reset_password.html", {"form": form})
+
 
 #ADDED
 def user_progress(request):
@@ -511,50 +524,59 @@ from django.conf import settings
 supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
 
 def admin_dashboard(request):
-    # 🛑 Only staff or superuser can access
+
     if not request.session.get("is_staff") and not request.session.get("is_superuser"):
         messages.error(request, "Access denied.")
         return redirect("task_dashboard")
 
-    # --- Handle Admin Actions ---
     if request.method == "POST":
         action = request.POST.get("action")
-        user_id = request.POST.get("user_id")
+        raw_user_id = request.POST.get("user_id")
 
-        if action and user_id:
-            # Prevent self-deletion
-            if str(request.session.get("user_id")) == str(user_id):
-                messages.error(request, "You cannot delete your own account.")
-            else:
-                if action == "delete":
-                    # ✅ Delete user by user_id
-                    supabase.table("user").delete().eq("user_id", user_id).execute()
-                    messages.success(request, "User deleted successfully.")
-
-                elif action == "make_admin":
-                    supabase.table("user").update({
-                        "is_staff": True,
-                        "is_superuser": True
-                    }).eq("user_id", user_id).execute()
-                    messages.success(request, "User promoted to Admin.")
-
-                elif action == "remove_admin":
-                    supabase.table("user").update({
-                        "is_staff": False,
-                        "is_superuser": False
-                    }).eq("user_id", user_id).execute()
-                    messages.success(request, "Admin role removed.")
-
+        # Fix type mismatch
+        try:
+            user_id = int(raw_user_id)
+        except:
+            messages.error(request, "Invalid user ID.")
             return redirect("admin_dashboard")
 
-    # --- Fetch All Users ---
-    response = supabase.table("user").select(
-        "user_id, name, email, is_active, is_staff, is_superuser"
-    ).execute()
+        # Prevent self-deletionfr r g
+        if user_id == request.session.get("user_id"):
+            messages.error(request, "You cannot delete your own account.")
+            return redirect("admin_dashboard")
 
+        try:
+            if action == "delete":
+                result = supabase.table("user").delete().eq("user_id", user_id).execute()
+                print("DELETE RESULT:", result)
+                messages.success(request, "User deleted successfully.")
+
+            elif action == "make_admin":
+                supabase.table("user").update({
+                    "is_staff": True,
+                    "is_superuser": True
+                }).eq("user_id", user_id).execute()
+                messages.success(request, "Promoted to admin.")
+
+            elif action == "remove_admin":
+                supabase.table("user").update({
+                    "is_staff": False,
+                    "is_superuser": False
+                }).eq("user_id", user_id).execute()
+                messages.success(request, "Admin role removed.")
+
+        except Exception as e:
+            print("SUPABASE ERROR:", e)
+            messages.error(request, f"Error: {str(e)}")
+
+        return redirect("admin_dashboard")
+
+    # Fetch users
+    response = supabase.table("user").select("*").execute()
     users = response.data or []
-    context = {"users": users}
-    return render(request, "admin_dashboard.html", context)
+
+    return render(request, "admin_dashboard.html", {"users": users})
+
 
 
 def profile_user(request):
@@ -564,116 +586,239 @@ def profile_user(request):
 #Profle added
 import os
 from django.conf import settings
-from django.contrib import messages
-from django.shortcuts import render, redirect
+import uuid
+
+from supabase import create_client
+import uuid
 
 def profile_user(request):
-    # Ensure user is logged in
     if "user_email" not in request.session:
-        messages.warning(request, "Please log in first.")
         return redirect("login")
 
-    user_name = request.session.get("user_name")
-    user_email = request.session.get("user_email")
+    supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
     user_id = request.session.get("user_id")
+    user_email = request.session.get("user_email")
 
-    # Handle profile image upload
-    if request.method == 'POST' and 'image' in request.FILES:
-        image_file = request.FILES['image']
-        save_dir = os.path.join(settings.MEDIA_ROOT, "profile_pics")
-        os.makedirs(save_dir, exist_ok=True)
-        filename = image_file.name.replace(" ", "_")
-        file_path = os.path.join("profile_pics", filename)
-        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
-        with open(full_path, "wb+") as f:
-            for chunk in image_file.chunks():
-                f.write(chunk)
-        request.session['profile_image'] = file_path
-        return redirect('profile_user')
+    # Fetch user data
+    user_record = supabase.table("user").select("*").eq("user_id", user_id).execute()
+    user_data = user_record.data[0]
 
-    # Handle edit profile form
-    if request.method == "POST" and 'email' in request.POST:
-        new_email = request.POST.get("email")
-        new_password = request.POST.get("password")
+    # ============================================================
+    # 1. IMAGE UPLOAD
+    # ============================================================
+    if request.method == "POST" and "image" in request.FILES:
+        image_file = request.FILES["image"]
 
-        # Build update dict
-        update_data = {"email": new_email}
-        if new_password:
-            update_data["password"] = new_password
+        file_ext = image_file.name.split(".")[-1]
+        filename = f"profile_{user_id}_{uuid.uuid4()}.{file_ext}"
+        file_bytes = image_file.read()
 
-        # Update in Supabase
-        supabase.table("user").update(update_data).eq("user_id", user_id).execute()
+        supabase.storage.from_(settings.SUPABASE_BUCKET).upload(
+            path=filename,
+            file=file_bytes,
+            file_options={"content-type": image_file.content_type},
+        )
 
-        # Update session
-        request.session["user_email"] = new_email
+        file_url = supabase.storage.from_(settings.SUPABASE_BUCKET).get_public_url(filename)
+        supabase.table("user").update({"profile_image": file_url}).eq("user_id", user_id).execute()
 
-        messages.success(request, "Profile updated successfully!")
+        request.session["profile_image"] = file_url
+        messages.success(request, "Profile picture updated!")
         return redirect("profile_user")
 
-    profile_image = request.session.get('profile_image', 'default_profile.png')
+    # ============================================================
+    # 2. CHANGE PASSWORD
+    # ============================================================
+    if request.method == "POST" and request.POST.get("action") == "change_password":
+        old_pw = request.POST.get("old_password")
+        new_pw = request.POST.get("new_password")
+        confirm_pw = request.POST.get("confirm_password")
 
-    context = {
-        "user_name": user_name,
-        "user_email": user_email,
-        "profile_image": profile_image,
-        "MEDIA_URL": settings.MEDIA_URL,
-    }
-    return render(request, "profile_user.html", context)
+        if new_pw != confirm_pw:
+            messages.error(request, "New passwords do not match.")
+            return redirect("profile_user")
 
+        # Verify old password using Supabase Auth
+        try:
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": user_email,
+                "password": old_pw
+            })
+            if not auth_response.user:
+                messages.error(request, "Old password is incorrect.")
+                return redirect("profile_user")
+        except Exception:
+            messages.error(request, "Old password is incorrect.")
+            return redirect("profile_user")
 
+        # Update password in Supabase Auth
+        try:
+            supabase.auth.update_user({"password": new_pw})
+            messages.success(request, "Password updated successfully!")
+        except Exception:
+            messages.error(request, "Failed to update password.")
+        return redirect("profile_user")
 
-def admin_profile(request):
-    # Ensure user is logged in
-    if "user_email" not in request.session:
-        messages.warning(request, "Please log in first.")
+    # ============================================================
+    # 3. DELETE ACCOUNT
+    # ============================================================
+    if request.method == "POST" and request.POST.get("action") == "delete_account":
+
+        # Delete image from Storage (optional)
+        profile_image_url = user_data.get("profile_image")
+        if profile_image_url:
+            import urllib.parse
+            path = urllib.parse.urlparse(profile_image_url).path.lstrip("/")
+            try:
+                supabase.storage.from_(settings.SUPABASE_BUCKET).remove([path])
+            except Exception as e:
+                print("Storage delete error:", e)
+
+        # Delete from Supabase Auth
+        auth_id = user_data.get("auth_id")
+        if auth_id:
+            try:
+                supabase.auth.admin.delete_user(auth_id)
+            except Exception as e:
+                print("Auth delete error:", e)
+
+        # Delete from custom table
+        supabase.table("user").delete().eq("user_id", user_id).execute()
+
+        request.session.flush()
         return redirect("login")
 
-    user_name = request.session.get("user_name")
-    user_email = request.session.get("user_email")
-    user_id = request.session.get("user_id")
-
-    # Handle profile image upload
-    if request.method == 'POST' and 'image' in request.FILES:
-        image_file = request.FILES['image']
-        save_dir = os.path.join(settings.MEDIA_ROOT, "profile_pics")
-        os.makedirs(save_dir, exist_ok=True)
-        filename = image_file.name.replace(" ", "_")
-        file_path = os.path.join("profile_pics", filename)
-        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
-        with open(full_path, "wb+") as f:
-            for chunk in image_file.chunks():
-                f.write(chunk)
-        request.session['profile_image'] = file_path
-        return redirect('admin_profile')
-
-    # Handle edit profile form
-    if request.method == "POST" and 'email' in request.POST:
-        new_email = request.POST.get("email")
-        new_password = request.POST.get("password")
-
-        # Build update dict
-        update_data = {"email": new_email}
-        if new_password:
-            update_data["password"] = new_password
-
-        # Update in Supabase
-        supabase.table("user").update(update_data).eq("user_id", user_id).execute()
-
-        # Update session
-        request.session["user_email"] = new_email
-
-        messages.success(request, "Profile updated successfully!")
-        return redirect("admin_profile")
-
-    profile_image = request.session.get('profile_image', 'default_profile.png')
+    # ============================================================
+    # 4. DISPLAY PAGE
+    # ============================================================
+    profile_image = request.session.get(
+        "profile_image",
+        user_data.get("profile_image", "default_profile.png")
+    )
 
     context = {
-        "user_name": user_name,
-        "user_email": user_email,
+        "user_name": user_data["name"],
+        "user_email": user_data["email"],
         "profile_image": profile_image,
-        "MEDIA_URL": settings.MEDIA_URL,
     }
+
+    return render(request, "profile_user.html", context)
+
+def admin_profile(request):
+    if "user_email" not in request.session:
+        return redirect("login")
+
+    supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+    user_id = request.session.get("user_id")
+    user_email = request.session.get("user_email")
+
+    # Fetch user data from custom table
+    user_record = supabase.table("user").select("*").eq("user_id", user_id).execute()
+    user_data = user_record.data[0]
+
+    # ============================================================
+    # 1. IMAGE UPLOAD
+    # ============================================================
+    if request.method == "POST" and "image" in request.FILES:
+        image_file = request.FILES["image"]
+
+        file_ext = image_file.name.split(".")[-1]
+        filename = f"profile_{user_id}_{uuid.uuid4()}.{file_ext}"
+        file_bytes = image_file.read()
+
+        supabase.storage.from_(settings.SUPABASE_BUCKET).upload(
+            path=filename,
+            file=file_bytes,
+            file_options={"content-type": image_file.content_type},
+        )
+
+        file_url = supabase.storage.from_(settings.SUPABASE_BUCKET).get_public_url(filename)
+        supabase.table("user").update({"profile_image": file_url}).eq("user_id", user_id).execute()
+        request.session["profile_image"] = file_url
+        messages.success(request, "Profile picture updated!")
+        return redirect("admin_profile")
+
+    # ============================================================
+    # 2. CHANGE PASSWORD
+    # ============================================================
+    if request.method == "POST" and request.POST.get("action") == "change_password":
+        old_pw = request.POST.get("old_password")
+        new_pw = request.POST.get("new_password")
+        confirm_pw = request.POST.get("confirm_password")
+
+        if new_pw != confirm_pw:
+            messages.error(request, "New passwords do not match.")
+            return redirect("admin_profile")
+
+        # ✅ Verify old password via Supabase Auth
+        try:
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": user_email,
+                "password": old_pw
+            })
+            if not auth_response.user:
+                messages.error(request, "Old password is incorrect.")
+                return redirect("admin_profile")
+        except Exception as e:
+            messages.error(request, "Failed to verify old password.")
+            return redirect("admin_profile")
+
+        # ✅ Update password via Supabase Auth
+        try:
+            supabase.auth.update_user({"password": new_pw})
+            messages.success(request, "Password updated successfully!")
+        except Exception as e:
+            messages.error(request, "Failed to update password.")
+        return redirect("admin_profile")
+
+    # ============================================================
+    # 3. DELETE ACCOUNT
+    # ============================================================
+    if request.method == "POST" and request.POST.get("action") == "delete_account":
+
+        # Delete profile image from Storage (optional)
+        profile_image_url = user_data.get("profile_image")
+        if profile_image_url:
+            import urllib.parse
+            path = urllib.parse.urlparse(profile_image_url).path.lstrip("/")
+            try:
+                supabase.storage.from_(settings.SUPABASE_BUCKET).remove([path])
+            except Exception as e:
+                print("Error deleting storage file:", e)
+
+        # Delete user from Supabase Auth
+        auth_id = user_data.get("auth_id")
+        if auth_id:
+            try:
+                supabase.auth.admin.delete_user(auth_id)
+            except Exception as e:
+                print("Error deleting auth user:", e)
+
+        # Delete user row from custom table
+        supabase.table("user").delete().eq("user_id", user_id).execute()
+
+        # Clear session
+        request.session.flush()
+        return redirect("login")
+
+    # ============================================================
+    # 4. DISPLAY PAGE
+    # ============================================================
+    profile_image = request.session.get(
+        "profile_image",
+        user_data.get("profile_image", "default_profile.png")
+    )
+
+    context = {
+        "user_name": user_data["name"],
+        "user_email": user_data["email"],
+        "profile_image": profile_image,
+    }
+
     return render(request, "admin_profile.html", context)
+
+
+
 
 #CHANGED
 from django.shortcuts import render
@@ -722,3 +867,133 @@ def leaderboard(request):
         "leaderboard": leaderboard,
     }
     return render(request, "leaderboard.html", context)
+
+from datetime import date, timedelta
+
+def streak_dashboard(request):
+    if "user_id" not in request.session:
+        messages.warning(request, "Please log in first.")
+        return redirect("login")
+
+    user_id = request.session["user_id"]
+
+    res = supabase.table("streaks").select("*").eq("user_id", user_id).execute()
+    streak = res.data[0] if res.data else None
+
+    points = streak["points"] if streak else 0
+
+    return render(request, "streak_dashboard.html", {
+        "points": points,
+        "streak_updated": False
+    })
+
+
+from .models import Achievement
+from supabase import create_client
+
+from datetime import datetime, timedelta
+from django.utils import timezone
+
+def check_achievements(user_id):
+    """Check and unlock achievements for a user."""
+    # Get streak points
+    streak_res = supabase.table("streaks").select("*").eq("user_id", user_id).execute()
+    streak = streak_res.data[0] if streak_res.data else None
+    streak_points = streak["points"] if streak else 0
+
+    today = datetime.now().date()
+
+    # Fetch all achievements for the user
+    ach_res = supabase.table("achievements").select("*").eq("user_id", user_id).execute()
+    achievements = ach_res.data
+
+    for ach in achievements:
+        if ach["unlocked"]:
+            continue  # already unlocked
+
+        unlock = False
+        code = ach["code"]
+
+        # 1️⃣ First step
+        if code == "first_step":
+            tasks = supabase.table("tasksession").select("*").eq("user_id", user_id).eq("status", "completed").execute()
+            if len(tasks.data) >= 1:
+                unlock = True
+
+        # 2️⃣ Streak-based achievements
+        elif code == "two_day_streak" and streak_points >= 2:
+            unlock = True
+        elif code == "week_warrior" and streak_points >= 7:
+            unlock = True
+        elif code == "two_week_champion" and streak_points >= 14:
+            unlock = True
+        elif code == "month_master" and streak_points >= 30:
+            unlock = True
+        elif code == "half_year_hero" and streak_points >= 180:
+            unlock = True
+        elif code == "year_of_focus" and streak_points >= 365:
+            unlock = True
+
+        # 3️⃣ Time-based achievements
+        elif code == "early_bird":
+            tasks_res = supabase.table("tasksession").select("*").eq("user_id", user_id).order("start_time", {"ascending": True}).limit(1).execute()
+            if tasks_res.data:
+                first_task_time = datetime.fromisoformat(tasks_res.data[0]["start_time"])
+                if first_task_time.hour < 8:
+                    unlock = True
+
+        elif code == "night_owl":
+            tasks_res = supabase.table("tasksession").select("*").eq("user_id", user_id).order("start_time", {"descending": True}).limit(1).execute()
+            if tasks_res.data:
+                last_task_time = datetime.fromisoformat(tasks_res.data[0]["start_time"])
+                if last_task_time.hour >= 22:
+                    unlock = True
+
+        # 4️⃣ Multi-tasker
+        elif code == "multi_tasker":
+            tasks_today = supabase.table("tasksession").select("*")\
+                .eq("user_id", user_id)\
+                .gte("start_time", today.isoformat())\
+                .lt("start_time", (today + timedelta(days=1)).isoformat())\
+                .eq("status", "completed")\
+                .execute()
+            if len(tasks_today.data) >= 3:
+                unlock = True
+
+        # 5️⃣ Update achievement in Supabase
+        if unlock:
+            supabase.table("achievements").update({
+                "unlocked": True,
+                "unlocked_at": timezone.now().isoformat()
+            }).eq("achievement_id", ach["achievement_id"]).execute()
+
+
+from supabase import create_client
+from django.utils import timezone
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+# Initialize Supabase client somewhere globally
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def achievements_dashboard(request):
+    if "user_id" not in request.session:
+        return redirect("login")
+
+    user_id = request.session["user_id"]
+
+    # Ensure default achievements exist
+    create_user_achievements(user_id)
+
+    # Fetch achievements
+    res = supabase.table("achievements").select("*").eq("user_id", user_id).execute()
+    achievements = res.data
+    achievements.sort(key=lambda x: not x.get("unlocked", False))
+    return render(request, "achievements_dashboard.html", {
+        "achievements": achievements
+    })
+
+
+
+
+

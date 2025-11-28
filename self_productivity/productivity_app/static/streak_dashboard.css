@@ -1,0 +1,226 @@
+/* ---------------------------- */
+/* Premium Global Styling */
+/* ---------------------------- */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+  background: #0d0d0d;
+  color: white;
+  overflow-x: hidden;
+}
+
+/* Fade Up Animation */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp 0.8s ease forwards;
+}
+
+/* ---------------------------- */
+/* HEADER (Matches Task Dashboard) */
+/* ---------------------------- */
+.premium-header {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+}
+
+.left-side {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  font-size: 22px;
+  filter: drop-shadow(0 0 5px gold);
+}
+
+/* Nav */
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-item, .nav-btn {
+  text-decoration: none;
+  font-size: 17px;
+  font-weight: 600;
+  color: #eaeaea;
+  padding: 8px 16px;
+  border-radius: 10px;
+  transition: 0.25s ease;
+}
+
+.nav-btn.active {
+  background: linear-gradient(135deg, #ffd978, #ffb300);
+  color: black;
+  box-shadow: 0 0 12px rgba(255,200,75,0.7);
+}
+
+.nav-item:hover, .nav-btn:hover {
+  background: rgba(255,255,255,0.12);
+  transform: translateY(-2px);
+}
+
+/* ---------------------------- */
+/* MAIN CONTENT */
+/* ---------------------------- */
+.content {
+  padding: 40px;
+  max-width: 1200px;
+  margin: auto;
+  text-align: center;
+}
+
+/* Premium Gradient Titles */
+.premium-title {
+  font-size: 38px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #ffe99d, #ffcf33);
+  -webkit-background-clip: text;
+  color: transparent;
+  margin-bottom: 40px;
+  margin-top: 50px;
+}
+
+/* ---------------------------- */
+/* STREAK CARD / GLASS CARD */
+/* ---------------------------- */
+.streak-card {
+  background: rgba(255,255,255,0.06);
+  border-radius: 20px;
+  padding: 50px 40px;
+  margin-bottom: 35px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 0 20px rgba(255,255,255,0.05);
+  transition: 0.4s ease;
+  display: inline-block;
+  min-width: 350px;
+}
+
+.streak-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 25px rgba(255,255,255,0.1);
+}
+
+.streak-card h1 {
+  font-size: 3rem;
+  background: linear-gradient(135deg, #ffe37b, #ffb300);
+  -webkit-background-clip: text;
+  color: transparent;
+  margin-bottom: 15px;
+  text-shadow: 0 0 10px rgba(255, 200, 0, 0.5);
+}
+
+.streak-card h2 {
+  font-size: 2rem;
+  color: #ffd978;
+  margin-bottom: 20px;
+}
+
+.streak-card p {
+  font-size: 1.2rem;
+  color: #eaeaea;
+}
+
+/* Glow effect for streak points */
+.points-glow {
+  font-weight: 700;
+  font-size: 2rem;
+  background: linear-gradient(135deg, #ffe37b, #ffb300);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 15px rgba(255, 217, 120, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .streak-card {
+    padding: 30px 20px;
+  }
+
+  .streak-card h1 {
+    font-size: 2.5rem;
+  }
+
+  .streak-card h2 {
+    font-size: 1.8rem;
+  }
+}
+
+.logout-btn {
+  background: linear-gradient(135deg, #ff5f5f, #ff1f1f); /* Red gradient */
+  color: #fff; /* White text */
+  border: none; /* No border */
+  font-weight: 600; /* Bold text */
+  cursor: pointer; /* Pointer on hover */
+  padding: 8px 14px; /* Space inside button */
+  border-radius: 10px; /* Rounded corners */
+  box-shadow: 0 4px 12px rgba(255,95,95,0.5); /* Soft shadow for depth */
+  transition: 0.3s ease; /* Smooth hover transition */
+  text-decoration: none; /* Remove underline */
+}
+
+.logout-btn:hover {
+  background: linear-gradient(135deg, #ff7f7f, #ff3f3f); /* Lighter gradient on hover */
+  transform: translateY(-2px) scale(1.02); /* Slight lift and scale */
+}
+/* Make form inline inside nav-menu */
+.nav-menu .logout-form {
+  display: inline-block;  /* shrink-wrap */
+  margin: 0;
+}
+/* Premium Logout Button */
+.nav-menu .logout-form .logout-btn {
+  background: linear-gradient(135deg, #ff5f5f, #ff1f1f);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(255,95,95,0.5);
+  transition: 0.3s ease;
+  text-decoration: none;
+  font-size: 16px;
+  display: inline-block;  /* ensures proper sizing */
+}
+/* Hover effect */
+.nav-menu .logout-form .logout-btn:hover {
+  background: linear-gradient(135deg, #ff7f7f, #ff3f3f);
+  transform: translateY(-2px) scale(1.02);
+}
+.nav-item.active {
+  background: linear-gradient(135deg, #ffd978, #ffb300);
+  color: #000;
+  box-shadow: 0 0 12px rgba(255,200,75,0.7);
+}
+.nav-btn {
+  text-decoration: none;
+  font-size: 17px;
+  font-weight: 600;
+  color: #f5deb4;
+  padding: 8px 14px;
+  border-radius: 10px;
+  transition: 0.25s ease;
+}
+
+.nav-btn:hover {
+  background: rgba(255,255,255,0.12);
+  transform: translateY(-2px);
+}

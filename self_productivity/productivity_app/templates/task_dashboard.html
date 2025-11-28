@@ -15,13 +15,14 @@
   <!-- PREMIUM HEADER -->
   <header class="top-bar premium-header">
     <div class="left-side">
-      <span class="logo">✨</span>
+      <span class="logo"></span>
       <a href="{% url 'task_dashboard' %}" class="nav-btn active">Home</a>
     </div>
 
     <nav class="nav-menu">
+      <a href="{% url 'achievements_dashboard' %}" class="nav-item">Achievements</a>
       <a href="{% url 'leaderboard' %}" class="nav-item">Leaderboard</a>
-      <a href="{% url 'task_summary' %}" class="nav-item">Summary</a>
+      <a href="{% url 'streak_dashboard' %}" class="nav-item">Streaks</a>
       <a href="{% url 'user_progress' %}" class="nav-item">Progress</a>
       <a href="{% url 'profile_user' %}" class="nav-item">Profile</a>
 

@@ -4,14 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Generated Task</title>
+  <title>Your Streak Task</title>
   <link rel="stylesheet" href="{% static 'task_result.css' %}">
 </head>
 <body>
 
 <div class="dashboard">
-
-  <!-- PREMIUM HEADER FROM LEADERBOARD -->
   <header class="top-bar premium-header">
     <div class="left-side">
       <span class="logo"></span>
@@ -19,7 +17,7 @@
     </div>
 
     <nav class="nav-menu">
-       <a href="{% url 'leaderboard' %}" class="nav-item">Leaderboard</a>
+      <a href="{% url 'leaderboard' %}" class="nav-item">Leaderboard</a>
       <a href="{% url 'streak_dashboard' %}" class="nav-item">Streaks</a>
       <a href="{% url 'user_progress' %}" class="nav-item">Progress</a>
       <a href="{% url 'profile_user' %}" class="nav-item">Profile</a>
@@ -31,23 +29,21 @@
     </nav>
   </header>
 
-  <!-- MAIN CONTENT -->
   <main class="content">
     <div class="summary-card premium-card">
-      <h2>Your Task is Ready!</h2>
-      <p class="footer">Here’s the task generated for you:</p>
+      <h2>Your Streak Task</h2>
+      <p class="footer">Here’s the streak task generated for you:</p>
 
       <div class="task-box">
         <p>{{ generated_task }}</p>
       </div>
 
-      <a href="{% url 'task_timer' %}?task_id={{ task_id }}&duration={{ duration }}&task={{ generated_task|urlencode }}" 
+      <a href="{% url 'streak_timer' %}?streaks_id={{ streaks_id }}&duration={{ duration }}&task={{ generated_task|urlencode }}&category={{ category|urlencode }}" 
          class="btn next-btn">
         ⏱ Timer
       </a>
     </div>
   </main>
-
 </div>
 
 </body>
