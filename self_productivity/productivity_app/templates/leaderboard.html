@@ -19,6 +19,7 @@
   </div>
 
   <nav class="nav-menu">
+    <a href="{% url 'achievements_dashboard' %}" class="nav-item">Achievements</a>
     <a href="{% url 'leaderboard' %}" class="nav-item active">Leaderboard</a>
         <a href="{% url 'streak_dashboard' %}" class="nav-item">Streaks</a>
         <a href="{% url 'user_progress' %}" class="nav-item">Progress</a>
@@ -32,67 +33,73 @@
 
 
     <main class="leaderboard-container">
-      <h1 class="title">🏆Leaderboard</h1>
+  <h1 class="title">🏆 Leaderboard</h1>
 
-      {% if leaderboard %}
-      <div class="pyramid-container">
+  <!-- COMPLETED TASKS LEADERBOARD -->
+  {% if leaderboard %}
+  <div class="pyramid-container">
 
-        <!-- TOP 1 -->
-        {% if leaderboard|length >= 1 %}
-        {% with user=leaderboard.0 %}
-        <div class="pyramid-card top1 glow-gold">
-          <div class="shine"></div>
-         <!-- <img src="{% static 'icons/gold-medal.png' %}" class="medal-icon gold" />-->
-          <div class="rank-badge gold-bg">#1</div>
-          <p class="name">{{ user.name }}</p>
-          <p class="score">{{ user.completed }} tasks</p>
-        </div>
-        {% endwith %}
-        {% endif %}
 
-        <!-- TOP 2 AND 3 -->
-        <div class="second-row">
+    <!-- TOP 1 -->
+    {% if leaderboard|length >= 1 %}
+    {% with user=leaderboard.0 %}
+    <div class="pyramid-card top1 glow-gold">
+      <div class="shine"></div>
+      <div class="rank-badge gold-bg">1</div>
+      <p class="name">{{ user.name }}</p>
+      <p class="score">{{ user.completed }} tasks</p>
+    </div>
+    {% endwith %}
+    {% endif %}
 
-          {% if leaderboard|length >= 2 %}
-          {% with user=leaderboard.1 %}
-          <div class="pyramid-card top2 glow-silver">
-           <!-- <img src="{% static 'icons/silver-medal.png' %}" class="medal-icon silver" />-->
-            <div class="rank-badge silver-bg">#2</div>
-            <p class="name">{{ user.name }}</p>
-            <p class="score">{{ user.completed }} tasks</p>
-          </div>
-          {% endwith %}
-          {% endif %}
-
-          {% if leaderboard|length >= 3 %}
-          {% with user=leaderboard.2 %}
-          <div class="pyramid-card top3 glow-bronze">
-            <!--<img src="{% static 'icons/bronze-medal.png' %}" class="medal-icon bronze" />-->
-            <div class="rank-badge bronze-bg">#3</div>
-            <p class="name">{{ user.name }}</p>
-            <p class="score">{{ user.completed }} tasks</p>
-          </div>
-          {% endwith %}
-          {% endif %}
-
-        </div>
-
-        <!-- THE REST -->
-        <div class="rest-container">
-          {% for user in leaderboard|slice:"3:" %}
-          <div class="rest-card fade-up">
-            <span class="rank-num">#{{ forloop.counter|add:3 }}</span>
-            <span class="rest-name">{{ user.name }}</span>
-            <span class="rest-score">{{ user.completed }} tasks</span>
-          </div>
-          {% endfor %}
-        </div>
-
+    <!-- TOP 2 & 3 -->
+    <div class="second-row">
+      {% if leaderboard|length >= 2 %}
+      {% with user=leaderboard.1 %}
+      <div class="pyramid-card top2 glow-silver">
+        <div class="rank-badge silver-bg">2</div>
+        <p class="name">{{ user.name }}</p>
+        <p class="score">{{ user.completed }} tasks</p>
       </div>
-      {% else %}
-      <p class="no-data">No completed tasks yet 😅</p>
+      {% endwith %}
       {% endif %}
-    </main>
+
+      {% if leaderboard|length >= 3 %}
+      {% with user=leaderboard.2 %}
+      <div class="pyramid-card top3 glow-bronze">
+        <div class="rank-badge bronze-bg">3</div>
+        <p class="name">{{ user.name }}</p>
+        <p class="score">{{ user.completed }} tasks</p>
+      </div>
+      {% endwith %}
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+ 
+
+  <!-- STREAK LEADERBOARD -->
+  <h2 class="sub-title">Top Streak Holders</h2>
+
+  {% if streak_leaderboard %}
+  <div class="streak-container">
+
+    {% for user in streak_leaderboard %}
+    <div class="rest-card fade-up">
+      <span class="rank-num">#{{ forloop.counter }}</span>
+      <span class="rest-name">{{ user.name }}</span>
+      <span class="rest-score">{{ user.points }} pts</span>
+    </div>
+    {% endfor %}
+
+  </div>
+  {% else %}
+    <p class="no-data">No streaks yet 🔥</p>
+  {% endif %}
+
+</main>
+
 
   </div>
 

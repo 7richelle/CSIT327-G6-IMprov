@@ -28,13 +28,52 @@ body {
 }
 
 .title {
-  font-size: 38px;
-  font-weight: 700;
+  font-size: 80px;
+  font-weight: 800;
   text-align: center;
+
+ 
   background: linear-gradient(90deg, #ffe99d, #ffcf33);
   -webkit-background-clip: text;
   color: transparent;
+
+  margin-bottom: 50px;
+  display: block;
+
+ 
+  text-shadow:
+      0 0 6px rgba(255, 215, 100, 0.6),
+      0 0 12px rgba(255, 200, 80, 0.4),
+      0 0 20px rgba(255, 190, 60, 0.3);
+
+
+  animation: softGoldGlow 3s ease-in-out infinite alternate;
 }
+
+
+@keyframes softGoldGlow {
+  0% {
+    text-shadow:
+      0 0 6px rgba(255, 215, 100, 0.5),
+      0 0 12px rgba(255, 200, 80, 0.35),
+      0 0 20px rgba(255, 190, 60, 0.25);
+  }
+  50% {
+    text-shadow:
+      0 0 10px rgba(255, 230, 140, 0.6),
+      0 0 18px rgba(255, 210, 120, 0.45),
+      0 0 28px rgba(255, 190, 60, 0.3);
+  }
+  100% {
+    text-shadow:
+      0 0 6px rgba(255, 215, 100, 0.6),
+      0 0 12px rgba(255, 200, 80, 0.4),
+      0 0 20px rgba(255, 190, 60, 0.3);
+  }
+}
+
+
+
 
 /* --------------------- */
 /* PYRAMID LAYOUT */
@@ -356,4 +395,126 @@ body {
 .nav-menu .logout-form .logout-btn:hover {
   background: linear-gradient(135deg, #ff7f7f, #ff3f3f);
   transform: translateY(-2px) scale(1.02);
+}
+
+/* ------------------------------------------------ */
+/* PREMIUM STREAK LEADERBOARD */
+/* ------------------------------------------------ */
+
+.sub-title {
+  font-size: 30px;
+  font-weight: 700;
+  margin-top: 100px;      /* distance from elements above */
+  margin-bottom: 20px;   /* optional */
+  text-align: center;    /* centers the text */
+  width: 100%;           /* ensures centering works fully */
+
+  background: linear-gradient(90deg, #ffeb9c, #ffb300);
+  -webkit-background-clip: text;
+  color: transparent;
+  display: block;        /* ensures it behaves as full-width element */
+}
+
+
+/* Gold Fire Icon */
+.sub-title::before {
+  content: "🔥";
+  margin-right: 8px;
+  filter: drop-shadow(0 0 8px gold) brightness(1.7) saturate(1.4);
+}
+
+/* Container */
+.streak-container {
+  margin: 40px auto;
+  width: 90%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Premium streak card */
+.rest-card {
+  background: rgba(255, 255, 255, 0.07);
+  padding: 20px 26px;
+  border-radius: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.12);
+
+  /* Premium Glow */
+  box-shadow: 0 0 12px rgba(255, 191, 73, 0.2);
+
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeUp 0.55s ease forwards;
+}
+
+/* Rank number gets a gold glow */
+.rank-num {
+  font-weight: 700;
+  font-size: 20px;
+  color: #ffdd7c;
+  text-shadow: 0 0 8px rgba(255, 200, 100, 0.6);
+}
+
+/* Name */
+.rest-name {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* Score */
+.rest-score {
+  font-weight: 600;
+  color: #ffd585;
+  text-shadow: 0 0 6px rgba(255, 200, 100, 0.5);
+}
+
+/* Updated animation */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animated-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -2;
+  pointer-events: none;
+}
+
+.flame {
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(255,180,0,0.35), rgba(255,140,0,0));
+  border-radius: 50%;
+  animation: floatFire 8s infinite ease-in-out;
+  filter: blur(40px);
+}
+
+.flame:nth-child(1) { top: 10%; left: 20%; animation-delay: 0s; }
+.flame:nth-child(2) { top: 50%; left: 60%; animation-delay: 2s; }
+.flame:nth-child(3) { top: 75%; left: 30%; animation-delay: 4s; }
+
+@keyframes floatFire {
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  50% { transform: translateY(-40px) scale(1.2); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 0.8; }
+}
+
+/* Fade Up Animation */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+  animation: fadeUp 0.8s ease forwards;
 }

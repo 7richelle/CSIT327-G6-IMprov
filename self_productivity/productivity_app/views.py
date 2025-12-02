@@ -828,45 +828,66 @@ def task_summary(request):
     return render(request, "task_summary.html", {"task": task})
 
 def leaderboard(request):
-    # Ensure user is logged in
     if "user_id" not in request.session:
         messages.warning(request, "Please log in first.")
         return redirect("login")
 
-    # Fetch task sessions where status is 'completed'
+    # --- LEADERBOARD FOR COMPLETED TASKS ---
     response = supabase.table("tasksession") \
         .select("user_id, status") \
         .eq("status", "completed") \
         .execute()
     sessions = response.data or []
 
-    # Count completed tasks per user
     user_task_counts = {}
     for s in sessions:
         uid = s.get("user_id")
         if uid:
             user_task_counts[uid] = user_task_counts.get(uid, 0) + 1
 
-    # Sort and keep top 3
     top_users = sorted(user_task_counts.items(), key=lambda x: x[1], reverse=True)[:3]
 
-    # Fetch user names for the top 3
+    # Fetch names
     user_ids = [u[0] for u in top_users]
+
     if user_ids:
         user_response = supabase.table("user").select("user_id, name").in_("user_id", user_ids).execute()
         user_data = {u["user_id"]: u["name"] for u in (user_response.data or [])}
     else:
         user_data = {}
 
-    leaderboard = [
+    leaderboard_tasks = [
         {"name": user_data.get(uid, "Unknown"), "completed": count}
         for uid, count in top_users
     ]
 
+    # --- LEADERBOARD FOR STREAKS ---
+    streak_res = supabase.table("streaks").select("user_id, points").order("points", desc=True).limit(3).execute()
+    streak_rows = streak_res.data or []
+
+    streak_user_ids = [s["user_id"] for s in streak_rows]
+
+    if streak_user_ids:
+        streak_user_response = supabase.table("user") \
+            .select("user_id, name") \
+            .in_("user_id", streak_user_ids) \
+            .execute()
+        streak_user_data = {u["user_id"]: u["name"] for u in (streak_user_response.data or [])}
+    else:
+        streak_user_data = {}
+
+    leaderboard_streaks = [
+        {"name": streak_user_data.get(s["user_id"], "Unknown"), "points": s["points"]}
+        for s in streak_rows
+    ]
+
     context = {
-        "leaderboard": leaderboard,
+        "leaderboard": leaderboard_tasks,
+        "streak_leaderboard": leaderboard_streaks
     }
+
     return render(request, "leaderboard.html", context)
+
 
 from datetime import date, timedelta
 

@@ -7,36 +7,51 @@
   <link rel="stylesheet" href="{% static 'streak_dashboard.css' %}">
 </head>
 <body>
+
+  <!-- 🔥 Animated Background -->
+  <div class="animated-bg">
+    <div class="flame"></div>
+    <div class="flame"></div>
+    <div class="flame"></div>
+  </div>
+
   <div class="dashboard">
     <header class="top-bar premium-header">
       <div class="left-side">
         <span class="logo"></span>
         <a href="{% url 'task_dashboard' %}" class="nav-btn">Home</a>
       </div>
-          <nav class="nav-menu">
-      <a href="{% url 'leaderboard' %}" class="nav-item">Leaderboard</a>
-      <a href="{% url 'streak_dashboard' %}" class="nav-item active">Streaks</a>
-      <a href="{% url 'user_progress' %}" class="nav-item">Progress</a>
-      <a href="{% url 'profile_user' %}" class="nav-item">Profile</a>
 
-      <form action="{% url 'login' %}" method="post" class="logout-form">
-        {% csrf_token %}
-        <button type="submit" class="logout-btn">Logout</button>
-      </form>
-    </nav>
+      <nav class="nav-menu">
+        <a href="{% url 'achievements_dashboard' %}" class="nav-item">Achievements</a>
+        <a href="{% url 'leaderboard' %}" class="nav-item">Leaderboard</a>
+        <a href="{% url 'streak_dashboard' %}" class="nav-item active">Streaks</a>
+        <a href="{% url 'user_progress' %}" class="nav-item">Progress</a>
+        <a href="{% url 'profile_user' %}" class="nav-item">Profile</a>
+
+        <form action="{% url 'login' %}" method="post" class="logout-form">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn">Logout</button>
+        </form>
+      </nav>
     </header>
 
-    <main class="content">
+    <main class="content fade-up">
+      <h1 class="page-title">🔥Streak Dashboard</h1>
+
       <div class="streak-card premium-card">
-        <h1>🔥 Your Current Streak</h1>
-        <h2>{{ points }} {{ points|pluralize:"point,points" }}</h2>
+        <h1>Your Current Streak</h1>
+        <h2 class="points-glow">{{ points }} {{ points|pluralize:"point,points" }}</h2>
+
         {% if streak_updated %}
-          <p>Streak updated for today ✅</p>
+          <p class="status success">Streak updated for today ✅</p>
         {% else %}
-          <p>No new updates today.</p>
+          <p class="status warning">No new updates today.</p>
         {% endif %}
       </div>
+
     </main>
   </div>
+
 </body>
 </html>

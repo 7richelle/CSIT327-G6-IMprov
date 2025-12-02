@@ -9,6 +9,7 @@
 </head>
 
 <body>
+
 <div class="dashboard">
 
   <!-- HEADER -->
@@ -38,7 +39,8 @@
     <div class="pyramid-card-wrapper">
       <div class="pyramid-card">
         <h1 class="improv-title">🏆 Achievements</h1>
-        <div class="shine"></div>
+       
+  
         <h2>Track Your Progress & Unlock Badges</h2>
       </div>
     </div>
@@ -66,7 +68,7 @@
         {% if ach.unlocked %}
           <span class="unlocked-text">Unlocked</span>
           {% if ach.unlocked_at %}
-          <div><small>Unlocked on: {{ ach.unlocked_at|date:"M d, Y H:i" }}</small></div>
+          <div><small> {{ ach.unlocked_at|date:"M d, Y H:i" }}</small></div>
           {% endif %}
           <div class="shine"></div>
         {% else %}
