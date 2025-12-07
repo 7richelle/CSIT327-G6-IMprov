@@ -170,7 +170,7 @@ button:hover {
   border-radius: 20px;
   padding: 28px 32px;
   text-align: center;
-  color: #ff6b6b;
+  color: #eee7e7;
   backdrop-filter: blur(14px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 217, 120, 0.35); /* gold accent */

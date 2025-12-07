@@ -237,3 +237,129 @@ body {
 .fade-up {
   animation: fadeUp 0.8s ease forwards;
 }
+/* Highlighted Gold Points Display */
+.total-points {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #ffd86b;
+  text-shadow: 0 0 8px rgba(255, 215, 90, 0.5);
+  margin-bottom: 15px;
+}
+
+.total-points span {
+  color: #ffcf33;
+  font-weight: 800;
+  font-size: 2rem;
+}
+/* --------------------------- */
+/* PREMIUM POINTS CARD         */
+/* --------------------------- */
+
+/* --------------------------- */
+/* PREMIUM POINTS CARD         */
+/* --------------------------- */
+.points-card {
+  width: 420px;
+  margin: 0 auto 40px auto;
+  padding: 30px;
+  border-radius: 26px;
+  overflow: hidden; /* IMPORTANT: shine stays inside */
+
+  background: linear-gradient(145deg, rgba(255,215,90,0.18), rgba(255,150,30,0.08));
+  border: 1px solid rgba(255,215,90,0.25);
+
+  box-shadow: 0 0 20px rgba(255,200,80,0.18);
+  backdrop-filter: blur(8px);
+  position: relative;
+
+  animation: pulseGlow 3s infinite ease-in-out;
+  transition: .3s ease;
+}
+
+.points-card:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 0 38px rgba(255,215,80,0.45);
+}
+
+/* GOLD STAR ICON */
+.points-icon {
+  font-size: 3.5rem;
+  margin-bottom: 10px;
+
+  background: linear-gradient(135deg, #fff4aa, #ffcf33);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 12px rgba(255,220,90,0.9);
+}
+
+/* TITLE */
+.points-card h3 {
+  margin-top: 5px;
+  font-size: 24px;
+  color: #ffe7a1;
+  font-weight: 700;
+}
+
+/* POINT VALUE */
+.points-value {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-top: 5px;
+
+  background: linear-gradient(180deg, #fff3a6, #ffbf00);
+  -webkit-background-clip: text;
+  color: transparent;
+
+  text-shadow: 0 0 20px rgba(255,200,80,0.6);
+  animation: numberPop 0.8s ease-out;
+}
+
+/* --------------------------- */
+/* INNER SHINE (INSIDE CARD)   */
+/* --------------------------- */
+
+.inner-shine {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 120px;
+  height: 100%;
+
+  background: linear-gradient(
+      115deg,
+      rgba(255,255,255,0),
+      rgba(255,255,255,0.35),
+      rgba(255,255,255,0)
+  );
+
+  transform: skewX(-20deg);
+  animation: innerShineSweep 4s infinite;
+  pointer-events: none;
+}
+
+/* Shine moves *inside* the card */
+@keyframes innerShineSweep {
+  0%   { transform: translateX(-180px) skewX(-20deg); opacity: 0; }
+  40%  { opacity: .6; }
+  50%  { opacity: .8; }
+  100% { transform: translateX(480px) skewX(-20deg); opacity: 0; }
+}
+
+/* --------------------------- */
+/* OTHER ANIMATIONS            */
+/* --------------------------- */
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 20px rgba(255,200,80,0.15); }
+  50% { box-shadow: 0 0 35px rgba(255,200,80,0.4); }
+  100% { box-shadow: 0 0 20px rgba(255,200,80,0.15); }
+}
+
+@keyframes numberPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  80% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+

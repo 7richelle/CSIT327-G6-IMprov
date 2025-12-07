@@ -62,8 +62,8 @@
     let timeLeft = 0; // in seconds
     let sessionId = null;
 
-    const duration = "{{ request.GET.duration|default:'5min' }}";
-    const taskId = "{{ request.GET.task_id }}";
+    const duration = "{{ duration }}";
+    const taskId = "{{ task_id }}";
 
     // Convert duration text to seconds
     const durationMap = {

@@ -44,9 +44,9 @@
         <h2 class="points-glow">{{ points }} {{ points|pluralize:"point,points" }}</h2>
 
         {% if streak_updated %}
-          <p class="status success">Streak updated for today ✅</p>
+          <p class="status success">Streak updated for today</p>
         {% else %}
-          <p class="status warning">No new updates today.</p>
+          <p class="status warning"></p>
         {% endif %}
       </div>
 

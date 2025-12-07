@@ -322,16 +322,45 @@ def end_task_session(request):
         data = json.loads(request.body)
         session_id = data.get("session_id")
         user_id = request.session.get("user_id")
+
         if not session_id or not user_id:
             return JsonResponse({"success": False, "error": "Missing session_id or user_id"})
 
-        # Mark task completed
+        # 1. Mark session completed
         supabase.table("tasksession").update({
             "status": "completed",
             "end_time": timezone.now().isoformat()
         }).eq("session_id", session_id).execute()
 
-        # Update streak
+        # 2. Get task_id → get difficulty
+        session_res = supabase.table("tasksession").select("task_id").eq("session_id", session_id).execute()
+        task_id = session_res.data[0]["task_id"]
+
+        task_res = supabase.table("task").select("difficulty").eq("task_id", task_id).execute()
+        difficulty = task_res.data[0]["difficulty"].lower()
+
+        # 3. Difficulty → points mapping
+        difficulty_points = {"easy": 50, "medium": 100, "hard": 150}
+        earned_points = difficulty_points.get(difficulty, 0)
+
+        # 4. Get existing points
+        points_res = supabase.table("points").select("*").eq("user_id", user_id).execute()
+        existing = points_res.data[0] if points_res.data else None
+
+        if existing:
+            new_total = (existing.get("total_points") or 0) + earned_points
+            supabase.table("points").update({
+                "total_points": new_total,
+                "updated_at": timezone.now().isoformat()
+            }).eq("points_id", existing["points_id"]).execute()
+        else:
+            supabase.table("points").insert({
+                "user_id": user_id,
+                "total_points": earned_points,
+                "updated_at": timezone.now().isoformat()
+            }).execute()
+
+        # 5. Update streaks (keep your logic)
         today = datetime.now().date()
         streak_res = supabase.table("streaks").select("*").eq("user_id", user_id).execute()
         streak = streak_res.data[0] if streak_res.data else None
@@ -358,11 +387,13 @@ def end_task_session(request):
                 "last_completed": today.isoformat()
             }).execute()
 
-        # ✅ Check achievements after streak update
+        # check achievements
         check_achievements(user_id)
 
         return JsonResponse({"success": True})
+
     return JsonResponse({"error": "Invalid request method"}, status=400)
+
 
 
 
@@ -474,7 +505,7 @@ def reset_password(request):
 
 #ADDED
 def user_progress(request):
-    #  Ensure user is logged in (via Supabase session)
+    # Ensure user is logged in (via Supabase session)
     if "user_id" not in request.session:
         messages.warning(request, "Please log in first.")
         return redirect("login")
@@ -482,11 +513,11 @@ def user_progress(request):
     user_id = request.session["user_id"]
     user_name = request.session.get("user_name", "User")
 
-    #  Fetch this user’s tasks from Supabase
+    # Fetch this user’s tasks from Supabase
     response = supabase.table("task").select("task_type, difficulty").eq("user_id", user_id).execute()
     user_tasks = response.data or []
 
-    #  Count totals
+    # Count totals
     total_tasks = len(user_tasks)
     stationary_counts = {"easy": 0, "medium": 0, "hard": 0}
     active_counts = {"easy": 0, "medium": 0, "hard": 0}
@@ -503,7 +534,11 @@ def user_progress(request):
     stationary_total = sum(stationary_counts.values())
     active_total = sum(active_counts.values())
 
-    #  Pass data to template
+    # Fetch user points
+    points_res = supabase.table("points").select("total_points").eq("user_id", user_id).execute()
+    total_points = points_res.data[0]["total_points"] if points_res.data else 0
+
+    # Define context (DO THIS BEFORE using it)
     context = {
         "user_name": user_name,
         "total_tasks": total_tasks,
@@ -511,9 +546,11 @@ def user_progress(request):
         "stationary_counts": stationary_counts,
         "active_total": active_total,
         "active_counts": active_counts,
+        "total_points": total_points,
     }
 
     return render(request, "user_progress.html", context)
+
 
 
 #ADMIN
@@ -832,36 +869,35 @@ def leaderboard(request):
         messages.warning(request, "Please log in first.")
         return redirect("login")
 
-    # --- LEADERBOARD FOR COMPLETED TASKS ---
-    response = supabase.table("tasksession") \
-        .select("user_id, status") \
-        .eq("status", "completed") \
+    # --- NEW LEADERBOARD FOR POINTS ---
+    points_res = (
+        supabase.table("points")
+        .select("user_id, total_points")
+        .order("total_points", desc=True)
+        .limit(3)
         .execute()
-    sessions = response.data or []
+    )
 
-    user_task_counts = {}
-    for s in sessions:
-        uid = s.get("user_id")
-        if uid:
-            user_task_counts[uid] = user_task_counts.get(uid, 0) + 1
+    points_rows = points_res.data or []
+    points_user_ids = [p["user_id"] for p in points_rows]
 
-    top_users = sorted(user_task_counts.items(), key=lambda x: x[1], reverse=True)[:3]
-
-    # Fetch names
-    user_ids = [u[0] for u in top_users]
-
-    if user_ids:
-        user_response = supabase.table("user").select("user_id, name").in_("user_id", user_ids).execute()
-        user_data = {u["user_id"]: u["name"] for u in (user_response.data or [])}
+    if points_user_ids:
+        user_res = (
+            supabase.table("user")
+            .select("user_id, name")
+            .in_("user_id", points_user_ids)
+            .execute()
+        )
+        user_data = {u["user_id"]: u["name"] for u in (user_res.data or [])}
     else:
         user_data = {}
 
-    leaderboard_tasks = [
-        {"name": user_data.get(uid, "Unknown"), "completed": count}
-        for uid, count in top_users
+    leaderboard_points = [
+        {"name": user_data.get(p["user_id"], "Unknown"), "points": p["total_points"]}
+        for p in points_rows
     ]
 
-    # --- LEADERBOARD FOR STREAKS ---
+    # --- EXISTING STREAK LEADERBOARD (UNCHANGED) ---
     streak_res = supabase.table("streaks").select("user_id, points").order("points", desc=True).limit(3).execute()
     streak_rows = streak_res.data or []
 
@@ -882,11 +918,12 @@ def leaderboard(request):
     ]
 
     context = {
-        "leaderboard": leaderboard_tasks,
+        "leaderboard": leaderboard_points,  # 🔥 now using points
         "streak_leaderboard": leaderboard_streaks
     }
 
     return render(request, "leaderboard.html", context)
+
 
 
 from datetime import date, timedelta

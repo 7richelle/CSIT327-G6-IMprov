@@ -34,30 +34,56 @@
 
 
     <!-- PROGRESS CONTENT (MATCHES UI STYLE) -->
-    <main class="progress-content">
-      <h2>{{ user_name }}’s Progress Overview</h2>
-      <p class="total">Total Tasks Completed: <span>{{ total_tasks }}</span></p>
+   <main class="progress-content">
 
-      <div class="progress-cards">
+  <h2>{{ user_name }}’s Progress Overview</h2>
 
-        <!-- Stationary Tasks Card -->
-        <div class="progress-card">
-          <div class="icon">🪑</div>
-          <h3>Stationary Tasks</h3>
-          <p><strong>Total:</strong> {{ stationary_total }}</p>
-          <p>Easy: {{ stationary_counts.easy }} <br> Medium: {{ stationary_counts.medium }} <br> Hard: {{ stationary_counts.hard }}</p>
-        </div>
+  <!-- ⭐ PREMIUM POINTS CARD -->
+  <div class="points-card fade-up">
+     <div class="inner-shine"></div>
+      <div class="points-icon">⭐</div>
+      <h3>Total Points Earned</h3>
+      <p class="points-value" id="pointsValue">{{ total_points }}</p>
+      <div class="shine"></div>
+  </div>
 
-        <!-- Active Tasks Card -->
-        <div class="progress-card">
-          <div class="icon">🏃</div>
-          <h3>Active Tasks</h3>
-          <p><strong>Total:</strong> {{ active_total }}</p>
-          <p>Easy: {{ active_counts.easy }} <br> Medium: {{ active_counts.medium }} <br> Hard: {{ active_counts.hard }}</p>
-        </div>
+  <!-- Total Tasks Completed -->
+  <p class="total">
+      Total Tasks Completed:
+      <span>{{ total_tasks }}</span>
+  </p>
 
+  <div class="progress-cards fade-up">
+
+      <!-- Stationary Tasks Card -->
+      <div class="progress-card">
+        <div class="icon">🪑</div>
+        <h3>Stationary Tasks</h3>
+        <p><strong>Total:</strong> {{ stationary_total }}</p>
+        <p>
+          Easy: {{ stationary_counts.easy }} <br>
+          Medium: {{ stationary_counts.medium }} <br>
+          Hard: {{ stationary_counts.hard }}
+        </p>
       </div>
-    </main>
+
+      <!-- Active Tasks Card -->
+      <div class="progress-card">
+        <div class="icon">🏃</div>
+        <h3>Active Tasks</h3>
+        <p><strong>Total:</strong> {{ active_total }}</p>
+        <p>
+          Easy: {{ active_counts.easy }} <br>
+          Medium: {{ active_counts.medium }} <br>
+          Hard: {{ active_counts.hard }}
+        </p>
+      </div>
+
+  </div>
+
+</main>
+
+
 
   </div>
 </body>
