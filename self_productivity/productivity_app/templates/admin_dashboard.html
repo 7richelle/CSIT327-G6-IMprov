@@ -16,7 +16,7 @@
 
   <nav class="nav-menu">
     <a href="{% url 'admin_profile' %}" class="nav-item">Profile</a>
-    <form action="{% url 'login' %}" method="post" class="logout-form">
+    <form action="{% url 'logout' %}" method="post" class="logout-form">
       {% csrf_token %}
       <button type="submit" class="nav-item logout-btn">Logout</button>
     </form>

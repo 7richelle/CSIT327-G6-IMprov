@@ -23,7 +23,7 @@
          <a href="{% url 'streak_dashboard' %}" class="nav-item">Streaks</a>
         <a href="{% url 'user_progress' %}" class="nav-item">Progress</a>
         <a href="{% url 'profile_user' %}" class="nav-item active">Profile</a>
-      <form action="{% url 'login' %}" method="post" class="logout-form">
+      <form action="{% url 'logout' %}" method="post" class="logout-form">
         {% csrf_token %}
         <button type="submit" class="logout-btn">Logout</button>
       </form>

@@ -30,5 +30,6 @@ urlpatterns = [
     path("leaderboard/", views.leaderboard, name="leaderboard"),
     path("streak_dashboard/", views.streak_dashboard, name="streak_dashboard"),
     path("achievements_dashboard/", views.achievements_dashboard, name="achievements_dashboard"),
+    path("logout/", views.logout_user, name="logout"),
 
 ]

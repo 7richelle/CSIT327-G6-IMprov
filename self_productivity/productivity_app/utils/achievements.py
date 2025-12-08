@@ -19,7 +19,7 @@ def create_user_achievements(user_id):
         {"code": "year_of_focus", "title": "Year of Focus", "description": "365-day streak"},
         {"code": "early_bird", "title": "Early Bird", "description": "Complete first task before 8 AM"},
         {"code": "night_owl", "title": "Night Owl", "description": "Complete task after 10 PM"},
-        {"code": "multi_tasker", "title": "Multi-Tasker", "description": "Complete 3+ tasks in a single day"},
+       
     ]
 
     # Insert default achievements if they don't exist
@@ -83,10 +83,7 @@ def check_achievements(user_id):
                 last_task_time = datetime.fromisoformat(tasks_res.data[0]["start_time"])
                 if last_task_time.hour >= 22:
                     unlock = True
-        elif code == "multi_tasker":
-            tasks_today = supabase.table("tasksession").select("*").eq("user_id", user_id).gte("start_time", today.isoformat()).lte("start_time", (today + timedelta(days=1)).isoformat()).execute()
-            if len(tasks_today.data) >= 3:
-                unlock = True
+        
 
         # Update achievement if unlocked
         if unlock:

@@ -112,6 +112,11 @@ def login_user(request):
     return render(request, "login.html")
 
 
+def logout_user(request):
+    request.session.flush()  # Deletes all session data
+    messages.success(request, "You have been logged out.")
+    return redirect("login")
+
 
 
 @csrf_exempt
@@ -1006,17 +1011,6 @@ def check_achievements(user_id):
                 last_task_time = datetime.fromisoformat(tasks_res.data[0]["start_time"])
                 if last_task_time.hour >= 22:
                     unlock = True
-
-        # 4️⃣ Multi-tasker
-        elif code == "multi_tasker":
-            tasks_today = supabase.table("tasksession").select("*")\
-                .eq("user_id", user_id)\
-                .gte("start_time", today.isoformat())\
-                .lt("start_time", (today + timedelta(days=1)).isoformat())\
-                .eq("status", "completed")\
-                .execute()
-            if len(tasks_today.data) >= 3:
-                unlock = True
 
         # 5️⃣ Update achievement in Supabase
         if unlock:

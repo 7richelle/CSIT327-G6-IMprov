@@ -74,28 +74,55 @@ body {
   gap: 22px;
 }
 
-.nav-item {
+.nav-item, .nav-btn {
   text-decoration: none;
   font-size: 17px;
   font-weight: 600;
+  color: #eaeaea;
   padding: 8px 16px;
-  border-radius: 14px;
-
-  color: #e9e9e9;
+  border-radius: 10px;
   transition: 0.25s ease;
 }
 
-/* Hover Glow */
-.nav-item:hover {
-  background: rgba(255,255,255,0.10);
-  box-shadow: 0 0 10px rgba(255,255,255,0.2);
-  transform: translateY(-2px);
-}
-
-/* ACTIVE - GOLD */
 .nav-item.active {
   background: linear-gradient(135deg, #ffd978, #ffb300);
   color: #000;
+  box-shadow: 0 0 12px rgba(255,200,75,0.7);
+}
+
+.nav-item:hover, .nav-btn:hover {
+  background: rgba(255,255,255,0.12);
+  transform: translateY(-2px);
+}
+.nav-item.active {
+  background: linear-gradient(135deg, #ffd978, #ffb300);
+  color: #000;
+  box-shadow: 0 0 12px rgba(255,200,75,0.7);
+}
+.nav-item, .nav-btn {
+  text-decoration: none;
+  font-size: 17px;
+  font-weight: 600;
+  color: #eaeaea;
+  padding: 8px 16px;
+  border-radius: 10px;
+  transition: 0.25s ease;
+}
+
+.nav-btn.active {
+  background: linear-gradient(135deg, #ffd978, #ffb300);
+  color: black;
+  box-shadow: 0 0 12px rgba(255,200,75,0.7);
+}
+
+.nav-item:hover, .nav-btn:hover {
+  background: rgba(255,255,255,0.12);
+  transform: translateY(-2px);
+}
+/* ACTIVE - GOLD */
+.nav-btn.active {
+  background: linear-gradient(135deg, #ffd978, #ffb300);
+  color: black;
   box-shadow: 0 0 12px rgba(255,200,75,0.7);
 }
 
