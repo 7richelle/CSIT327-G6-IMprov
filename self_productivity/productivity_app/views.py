@@ -575,20 +575,25 @@ def admin_dashboard(request):
         action = request.POST.get("action")
         raw_user_id = request.POST.get("user_id")
 
-        # Fix type mismatch
         try:
             user_id = int(raw_user_id)
         except:
             messages.error(request, "Invalid user ID.")
             return redirect("admin_dashboard")
 
-        # Prevent self-deletionfr r g
         if user_id == request.session.get("user_id"):
             messages.error(request, "You cannot delete your own account.")
             return redirect("admin_dashboard")
 
         try:
             if action == "delete":
+                # 1. Delete dependent rows (prevent FK issues)
+                supabase.table("points").delete().eq("user_id", user_id).execute()
+                supabase.table("streaks").delete().eq("user_id", user_id).execute()
+                supabase.table("tasksession").delete().eq("user_id", user_id).execute()
+                supabase.table("achievements").delete().eq("user_id", user_id).execute()
+
+                # 2. Delete user
                 result = supabase.table("user").delete().eq("user_id", user_id).execute()
                 print("DELETE RESULT:", result)
                 messages.success(request, "User deleted successfully.")
@@ -613,11 +618,12 @@ def admin_dashboard(request):
 
         return redirect("admin_dashboard")
 
-    # Fetch users
+    # FETCH USERS
     response = supabase.table("user").select("*").execute()
     users = response.data or []
 
     return render(request, "admin_dashboard.html", {"users": users})
+
 
 
 
