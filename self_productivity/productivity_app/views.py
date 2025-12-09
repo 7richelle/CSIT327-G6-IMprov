@@ -61,7 +61,7 @@ def register(request):
             "is_superuser": False
         }).execute()
 
-        messages.success(request, "Registration successful! You can now log in.")
+        messages.success(request, "Registration successful! Please check your email to verify your account.")
         return redirect("register")
 
     return render(request, "register.html")
